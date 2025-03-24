@@ -1,10 +1,12 @@
-import tkinter as tk
-from gui.main_window import MainWindow
+import customtkinter as ctk
+from main_window import App  # Import the App class from the main_window.py
 
-def run_app():
-    root = tk.Tk()
-    app = MainWindow(root)
-    root.mainloop()
+
+def run_application():
+    # Initialize the app and run the main loop
+    app = App()
+    app.mainloop()
+
 
 if __name__ == "__main__":
-    run_app()
+    run_application()

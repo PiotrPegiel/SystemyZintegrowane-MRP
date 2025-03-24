@@ -1,0 +1,37 @@
+BOM:
+	Możliwość dodawania kolejnych poziomów
+	input:
+		Nazwa elementu na danym poziomie,
+		Wskazywanie elementu nadrzędnego (poza poziomem 0),
+		Ilość potrzebnych części (do stworzenia produktu na poziomie wyżej),
+		Stan magazynowy,
+		Czas produkcji (w arbitralnych jednostkach czasu, np. 5),
+		Wielkość partii (ilość wyprodukowanych jednostek w danym Czasie produkcyjnym)
+
+Input dla GHP i MRP:
+	Ilość jednostek czasu (określa ilość kolumn dla GHP i MRP (nie licząc kolumny z nazwali wierszy))
+
+GHP:
+	input:
+		Czas produkcji (pobierany z BOM, produktu na poziomie 0 (może być tylko 1 taki produkt)),
+		Początkowy stan magazynowy (pobierany z BOM)
+	input w tabelce:
+		Popyt,
+		Produkcja
+	output:
+		Stan magazynowy
+
+MRP:
+	input:
+		Czas produkcji (pobierany z BOM),
+		Wielkość partii (pobierany z BOM),
+		Poziom BOM (pobierany z BOM),
+		Początkowy stan magazynowy (pobierany z BOM)
+	input w tabelce:
+		Zapotrzebowanie (pobierane z produkcji GHP dla poziomu 1, i z produkcji produktu nadrzędnego dla poziomów BOM 2 i wyżej),
+		Planowane przyjęcia (opcjonalne, wprowadzane przez użytkownika, przy wprowadzeniu danych, przekalkulowyje tabele na które wpływa)
+	output:
+		Przewidywany stan magazynowy,
+		Zapotrzebowanie netto,
+		Planowana produkcja,
+		Planowane przyjęcie produkcji
