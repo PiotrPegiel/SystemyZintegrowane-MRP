@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from bom import Material, BOM
-from ghp import GHP
+from src.bom import Material, BOM
+from src.ghp import GHP
 
 
 class App(ctk.CTk):
@@ -55,8 +55,8 @@ class App(ctk.CTk):
         self.add_material_button = ctk.CTkButton(self.material_frame, text="Add Material", command=self.add_material)
         self.add_material_button.grid(row=5, columnspan=2, pady=10)
 
-        self.material_listbox = ctk.CTkListbox(self, height=10)
-        self.material_listbox.pack(pady=20)
+        # self.material_listbox = ctk.CTkListbox(self, height=10)
+        # self.material_listbox.pack(pady=20)
 
         # Demand input
         self.demand_label = ctk.CTkLabel(self, text="Demand for Level 0 Product (e.g., [0, 0, 0, 0, 20, 0, 40, 0, 0, 0])")
