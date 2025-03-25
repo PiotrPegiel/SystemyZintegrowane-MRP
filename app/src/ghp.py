@@ -41,6 +41,23 @@ class GHP:
 
         return availability
 
+    def get_tables(self):
+        """
+        Retrieve the demand, production, and availability tables for the level 0 material.
+        :return: A dictionary containing the tables for the level 0 material.
+        """
+        if not self.production_schedule:
+            raise ValueError("No production schedule available. Please calculate GHP first.")
+
+        # Assuming only one level 0 material exists
+        material_name, data = next(iter(self.production_schedule.items()))
+        return {
+            "material_name": material_name,
+            "demand": data["demand"],
+            "production": data["production"],
+            "availability": data["availability"]
+        }
+
     def display_ghp(self):
         """
         Display the GHP results for the level 0 material.
