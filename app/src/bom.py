@@ -36,6 +36,47 @@ class BOM:
             self.level_0_material = material
         self.materials.append(material)
 
+    def get_material_by_name(self, name):
+        """ Return a single material by its name. """
+        for material in self.materials:
+            if material.name == name:
+                return material
+        return None
+
+    def get_materials_by_level(self, level):
+        """ Return all materials at a specific level. """
+        if self.level_0_material is None:
+            return []
+
+        result = []
+
+        def collect_by_level(material, current_level):
+            if current_level == level:
+                result.append(material)
+            for child in material.children:
+                collect_by_level(child, current_level + 1)
+
+        collect_by_level(self.level_0_material, 0)
+        return result
+
+    def get_all_available_materials(self):
+        """ Return all materials that have stock greater than 0. """
+        return [material for material in self.materials if material.stock > 0]
+
+    def get_parent_of_material(self, name):
+        """ Return the parent of a material by its name, if available. """
+        material = self.get_material_by_name(name)
+        if material and material.parent:
+            return self.get_material_by_name(material.parent)
+        return None
+    
+    def get_children_of_material(self, name):
+        """ Return the children of a material by its name. """
+        material = self.get_material_by_name(name)
+        if material:
+            return material.children
+        return []
+
     def display_bom(self):
         """ Display the BOM structure (materials and their children) in a tree format. """
         if self.level_0_material is None:
