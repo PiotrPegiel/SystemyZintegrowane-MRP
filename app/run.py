@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from main_window import App  # Import the App class from the main_window.py
+from gui.main_window import App  # Import the App class from the main_window.py
 
 
 def run_application():
