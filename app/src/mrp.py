@@ -1,122 +1,136 @@
 from bom import BOM, Material
 from ghp import GHP
 
-class MRP:
-    def __init__(self, bom):
+class MRPTable:
+    def __init__(self, material_name, table_size):
         """
-        Initializes the MRP system with the given Bill of Materials (BOM).
+        Initializes an MRP table for a specific material.
+        :param material_name: The name of the material.
+        :param table_size: The number of time periods.
+        """
+        self.material_name = material_name
+        self.demand = [0] * table_size
+        self.planned_delivery = [0] * table_size
+        self.available = [0] * table_size
+        self.net_requirement = [0] * table_size
+        self.planned_order = [0] * table_size
+        self.planned_receipt = [0] * table_size
+
+class MRP:
+    def __init__(self, bom, ghp, table_size):
+        """
+        Initializes the MRP system with the given BOM, GHP, and table size.
         :param bom: The Bill of Materials object.
+        :param ghp: The GHP object.
+        :param table_size: The number of time periods.
         """
         self.bom = bom
-        self.materials = bom.materials
-        self.planned_orders = {}
+        self.ghp = ghp
+        self.table_size = table_size
+        self.mrp_tables = {}
 
-    def calculate_mrp(self, ghp_demand, planned_deliveries, time_periods):
+    def order_bom_by_level(self):
         """
-        Calculate the MRP for all materials.
-        :param ghp_demand: A list representing demand for the level 0 product for each time period.
-        :param planned_deliveries: A dictionary where keys are material names and values are their planned deliveries.
-        :param time_periods: The number of periods for which to calculate MRP.
+        Orders the materials in the BOM by level (increasing).
         """
-        # Start with the level 0 material
-        level_0_material = self.bom.level_0_material
-        if not level_0_material:
-            raise ValueError("No level 0 material found in BOM.")
+        ordered_materials = []
+        level = 0
+        while True:
+            materials_at_level = self.bom.get_materials_by_level(level)
+            if not materials_at_level:
+                break
+            ordered_materials.extend(materials_at_level)
+            level += 1
+        return ordered_materials
 
-        # Recursively calculate MRP for all materials
-        self._calculate_mrp_recursive(level_0_material, ghp_demand, planned_deliveries, time_periods)
-
-    def _calculate_mrp_recursive(self, material, ghp_demand, planned_deliveries, time_periods):
+    def calculate_mrp(self):
         """
-        Recursively calculate MRP for a material and its children.
-        :param material: The current material to process.
-        :param ghp_demand: A list representing demand for the level 0 product for each time period.
-        :param planned_deliveries: A dictionary where keys are material names and values are their planned deliveries.
-        :param time_periods: The number of periods for which to calculate MRP.
+        Calculates the MRP tables for all materials in the BOM.
         """
-        # Pass the planned delivery for the current material
-        planned_delivery = planned_deliveries.get(material.name, [0] * time_periods)
+        # Order materials by level
+        ordered_materials = self.order_bom_by_level()
 
-        # If this is a level 0 material, skip further calculations
-        if material.parent is None:
-            return
+        # Process each material in order
+        for material in ordered_materials:
+            if material.parent is None:
+                # Skip level 0 material (no MRP table needed)
+                continue
 
-        # Calculate MRP for the current material
-        self.calculate_material_mrp(material, ghp_demand, planned_delivery, time_periods)
+            # Create an MRP table for the material
+            mrp_table = MRPTable(material.name, self.table_size)
 
-        # Recursively calculate MRP for all child materials
-        for child in material.children:
-            self._calculate_mrp_recursive(child, ghp_demand, planned_deliveries, time_periods)
-
-    def calculate_material_mrp(self, material, ghp_demand, planned_delivery, time_periods):
-        """
-        Calculate MRP for a specific material.
-        :param material: Material object to calculate.
-        :param ghp_demand: The GHP demand for the level 0 product.
-        :param planned_delivery: The planned delivery for this material.
-        :param time_periods: The number of periods to consider.
-        """
-        # Initialize MRP for this material
-        demand = [0] * time_periods
-        available = [material.stock] + [0] * (time_periods - 1)
-        net_requirement = [0] * time_periods
-        planned_order = [0] * time_periods
-        planned_receipt = [0] * time_periods
-
-        # Get parent demand (for level 1 and beyond)
-        if material.parent is None:
-            return
-        parent_demand = self.planned_orders[material.parent]["planned_order"]
-
-        for t in range(time_periods):
-            # Calculate demand based on parent planned orders
-            demand[t] = parent_demand[t] * material.quantity_needed
-
-            # Calculate net requirement and availability
-            if t == 0:
-                available[t] = material.stock - demand[t] - planned_delivery[t]
+            # Calculate demand
+            if self.bom.level_0_material and material.parent == self.bom.level_0_material.name:
+                # Level 1 materials: demand comes from GHP production with left offset
+                ghp_production = self.ghp.get_tables()["production"]
+                offset = self.bom.level_0_material.production_time
+                mrp_table.demand = [
+                    (ghp_production[i + offset] if i + offset < self.table_size else 0) * material.quantity_needed
+                    for i in range(self.table_size)
+                ]
             else:
-                available[t] = available[t - 1] + planned_receipt[t - 1] - demand[t] - planned_delivery[t]
+                # Level >= 2 materials: demand comes from parent's planned order
+                parent_table = self.mrp_tables[material.parent]
+                mrp_table.demand = [
+                    parent_table.planned_order[i] * material.quantity_needed
+                    for i in range(self.table_size)
+                ]
 
-            if available[t] < 0:
-                # Create net requirement to cover the shortage
-                net_requirement[t] = abs(available[t])
+            # Calculate net requirement, planned order, planned receipt, and availability
+            for t in range(self.table_size):
+                if t == 0:
+                    available = material.stock + mrp_table.planned_delivery[t] + mrp_table.planned_receipt[t] - mrp_table.demand[t]
+                else:
+                    available = (
+                        mrp_table.available[t - 1]
+                        + mrp_table.planned_delivery[t]
+                        + mrp_table.planned_receipt[t]  # Add planned receipt only at this index
+                        - mrp_table.demand[t]
+                    )
 
-                # Determine the release time for the planned order
-                release_time = t - material.production_time
-                if release_time >= 0:
-                    planned_order[release_time] += net_requirement[t]
-                    planned_receipt[t] += net_requirement[t]
+                if available < 0:
+                    mrp_table.net_requirement[t] = abs(available)
+                    # Find latest planned order with value != 0
+                    latest_planned_order_index = 0
+                    for i in range(t, -1, -1):
+                        if mrp_table.planned_order[i] != 0:
+                            latest_planned_order_index = i
+                            break
+                    if latest_planned_order_index < t and latest_planned_order_index + material.production_time <= t:
+                        # Create a new planned order
+                        release_time = max(0, t - material.production_time)
+                        mrp_table.planned_order[release_time] += material.production_capacity
+                        receipt_time = release_time + material.production_time  # Receipt does not always happen at current index
+                        if receipt_time < self.table_size:
+                            mrp_table.planned_receipt[receipt_time] += material.production_capacity
 
-                # Update availability after planned receipt
-                available[t] += net_requirement[t]
+                if t == 0:
+                    available = material.stock + mrp_table.planned_delivery[t] + mrp_table.planned_receipt[t] - mrp_table.demand[t]
+                else:
+                    available = (
+                        mrp_table.available[t - 1]
+                        + mrp_table.planned_delivery[t]
+                        + mrp_table.planned_receipt[t]  # Add planned receipt only at this index
+                        - mrp_table.demand[t]
+                    )
 
-        # Store results in planned_orders dictionary for material
-        self.planned_orders[material.name] = {
-            "demand": demand,
-            "planned_delivery": planned_delivery,
-            "available": available,
-            "net_requirement": net_requirement,
-            "planned_order": planned_order,
-            "planned_receipt": planned_receipt
-        }
+                mrp_table.available[t] = available
+
+            # Store the MRP table
+            self.mrp_tables[material.name] = mrp_table
 
     def display_mrp(self):
         """
-        Displays the MRP results for all materials except for level 0 materials.
+        Displays the MRP tables for all materials except for level 0 materials.
         """
-        for material_name, data in self.planned_orders.items():
-            # Skip level 0 materials
-            if self.bom.get_material_by_name(material_name).parent is None:
-                continue
-
+        for material_name, table in self.mrp_tables.items():
             print(f"MRP for {material_name}:")
-            print(f"  Demand: {data['demand']}")
-            print(f"  Planned Delivery: {data['planned_delivery']}")
-            print(f"  Available: {data['available']}")
-            print(f"  Net Requirement: {data['net_requirement']}")
-            print(f"  Planned Order: {data['planned_order']}")
-            print(f"  Planned Receipt: {data['planned_receipt']}")
+            print(f"  Demand: {table.demand}")
+            print(f"  Planned Delivery: {table.planned_delivery}")
+            print(f"  Available: {table.available}")
+            print(f"  Net Requirement: {table.net_requirement}")
+            print(f"  Planned Order: {table.planned_order}")
+            print(f"  Planned Receipt: {table.planned_receipt}")
             print()
 
 # Example of usage:
@@ -145,14 +159,16 @@ if __name__ == "__main__":
     
 
     # Create MRP system and calculate
-    mrp_system = MRP(bom)
+    mrp_system = MRP(bom, ghp_system, table_size)
+
     #planned_delivery = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     planned_deliveries = {
         "Countertop": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "Wooden Plate": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "Legs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
-    mrp_system.calculate_mrp(ghp_production, planned_deliveries, table_size)
+
+    mrp_system.calculate_mrp()
     
     # Display MRP results
     mrp_system.display_mrp()
