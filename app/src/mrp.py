@@ -17,7 +17,7 @@ class MRPTable:
         self.planned_receipt = [0] * table_size
 
 class MRP:
-    def __init__(self, bom, ghp, table_size):
+    def __init__(self, bom, ghp, table_size, planned_delivery):
         """
         Initializes the MRP system with the given BOM, GHP, and table size.
         :param bom: The Bill of Materials object.
@@ -27,6 +27,7 @@ class MRP:
         self.bom = bom
         self.ghp = ghp
         self.table_size = table_size
+        self.planned_delivery = planned_delivery
         self.mrp_tables = {}
 
     def order_bom_by_level(self):
@@ -58,6 +59,9 @@ class MRP:
 
             # Create an MRP table for the material
             mrp_table = MRPTable(material.name, self.table_size)
+
+            # Use planned delivery if available
+            mrp_table.planned_delivery = self.planned_delivery.get(material.name, [0] * self.table_size)
 
             # Calculate demand
             if self.bom.level_0_material and material.parent == self.bom.level_0_material.name:
@@ -157,20 +161,28 @@ if __name__ == "__main__":
     ghp_system.calculate_ghp(demand, production, table_size)
     ghp_production = ghp_system.get_tables()['production']
     
-
-    # Create MRP system and calculate
-    mrp_system = MRP(bom, ghp_system, table_size)
-
-    #planned_delivery = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    # Planned_delivery
     planned_deliveries = {
         "Countertop": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "Wooden Plate": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         "Legs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     }
 
+    # Create MRP system and calculate
+    mrp_system = MRP(bom, ghp_system, table_size, planned_deliveries)
     mrp_system.calculate_mrp()
     
     # Display MRP results
+    mrp_system.display_mrp()
+
+    # Second variant
+    planned_deliveries = {
+        "Countertop": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "Wooden Plate": [30, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "Legs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+    mrp_system = MRP(bom, ghp_system, table_size, planned_deliveries)
+    mrp_system.calculate_mrp()
     mrp_system.display_mrp()
 
     # Expected output:
