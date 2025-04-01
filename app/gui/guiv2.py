@@ -47,7 +47,7 @@ class DataEntryForm(ttk.Frame):
 
         ## container
         self.bus_frm = ttk.Frame(self.bus_cf, padding=5)
-        self.bus_frm.columnconfigure(1, weight=1)
+        self.bus_frm.columnconfigure(5, weight=1)
         self.bus_cf.add(
             child=self.bus_frm, 
             title='Produkty:', 
@@ -116,14 +116,26 @@ class DataEntryForm(ttk.Frame):
         # print("Element Nadrzędny:", self.cbo.get())
 
     def update_item_list(self):
-        for i in range(len(self.Items)):
-            lbl = ttk.Label(self.bus_frm, text=self.Items[i]["Nazwa"])
-            lbl.grid(row=i*2, column=0, sticky=W, pady=2)
-            lbl = ttk.Label(self.bus_frm, text=self.Items[i]["Stan"])
-            lbl.grid(row=i*2, column=1, sticky=EW, padx=5, pady=2)
-            # self.setvar('Stan', self.Items[i]["Stan"])
-            sep = ttk.Separator(self.bus_frm, bootstyle=SECONDARY, orient="horizontal")
-            sep.grid(row=i*2+1, column=0, columnspan=2, pady=10, sticky=EW)
+        lbl = ttk.Label(self.bus_frm, text="Nazwa")
+        lbl.grid(row=0, column=0, sticky=W, pady=2)
+        lbl = ttk.Label(self.bus_frm, text="Stock")
+        lbl.grid(row=0, column=1, sticky=W, pady=2)
+        lbl = ttk.Label(self.bus_frm, text="Stock")
+        lbl.grid(row=0, column=2, sticky=W, pady=2)
+        lbl = ttk.Label(self.bus_frm, text="Stock")
+        lbl.grid(row=0, column=3, sticky=W, pady=2)
+        lbl = ttk.Label(self.bus_frm, text="Stock")
+        lbl.grid(row=0, column=4, sticky=W, pady=2)
+        lbl = ttk.Label(self.bus_frm, text="Stock")
+        lbl.grid(row=0, column=5, sticky=W, pady=2)
+        # for i in range(len(self.Items)):
+        #     lbl = ttk.Label(self.bus_frm, text=self.Items[i]["Nazwa"])
+        #     lbl.grid(row=i*2, column=0, sticky=W, pady=2)
+        #     lbl = ttk.Label(self.bus_frm, text=self.Items[i]["Stan"])
+        #     lbl.grid(row=i*2, column=1, sticky=EW, padx=5, pady=2)
+        #     # self.setvar('Stan', self.Items[i]["Stan"])
+        #     sep = ttk.Separator(self.bus_frm, bootstyle=SECONDARY, orient="horizontal")
+        #     sep.grid(row=i*2+1, column=0, columnspan=5, pady=10, sticky=EW)
 
     def on_cancel(self):
         """Cancel and close the application."""

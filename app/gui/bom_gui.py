@@ -7,6 +7,7 @@ from .collapsing_frame import CollapsingFrame
 class BOMGUI(ttk.Frame):
     def __init__(self, master, bom, on_material_added):
         super().__init__(master, padding=(10, 10))
+        self.i = 0
         self.pack(fill=BOTH, expand=YES)
 
         self.bom = bom
@@ -28,6 +29,13 @@ class BOMGUI(ttk.Frame):
         # Create collapsible frame for product list
         self.product_list_frame = CollapsingFrame(self)
         self.product_list_frame.pack(fill=BOTH, expand=YES, pady=10)
+
+        self.bus_frm = ttk.Frame(self.product_list_frame, padding=5)
+        self.bus_frm.columnconfigure(5, weight=1)
+        self.product_list_frame.add(
+            child=self.bus_frm, 
+            title='Produkty:', 
+            bootstyle=SECONDARY)
 
     def create_initial_form(self):
         """Create the initial form for level 0 material input."""
@@ -158,18 +166,40 @@ class BOMGUI(ttk.Frame):
     def update_product_list(self):
         """Update the collapsible frame with the latest materials."""
         # Clear existing entries
-        for widget in self.product_list_frame.winfo_children():
+        for widget in self.bus_frm.winfo_children():
             widget.destroy()
 
         # Add each material to the collapsible frame
+        lbl = ttk.Label(self.bus_frm, text="Nazwa")
+        lbl.grid(row=0, column=0, sticky=W, pady=2)
+        lbl = ttk.Label(self.bus_frm, text="Parent")
+        lbl.grid(row=0, column=1, sticky=EW, pady=2, padx=(7,7))
+        lbl = ttk.Label(self.bus_frm, text="Quantity Needed")
+        lbl.grid(row=0, column=2, sticky=EW, pady=2, padx=(7,7))
+        lbl = ttk.Label(self.bus_frm, text="Stock")
+        lbl.grid(row=0, column=3, sticky=EW, pady=2, padx=(7,7))
+        lbl = ttk.Label(self.bus_frm, text="Production Time")
+        lbl.grid(row=0, column=4, sticky=EW, pady=2, padx=(7,7))
+        lbl = ttk.Label(self.bus_frm, text="Production Capacity")
+        lbl.grid(row=0, column=5, sticky=EW, pady=2, padx=(7,7))
+        sep = ttk.Separator(self.bus_frm, bootstyle=SECONDARY, orient="horizontal")
+        sep.grid(row=1, column=0, columnspan=6, pady=10, sticky=EW)
         for material in self.bom.materials:
-            frame = ttk.Frame(self.product_list_frame)
-            label = ttk.Label(
-                frame,
-                text=f"{material.name} (Stock: {material.stock}, Production Time: {material.production_time})",
-            )
-            label.pack(fill=X, padx=5, pady=5)
-            self.product_list_frame.add(frame, title=material.name, bootstyle=SECONDARY)
+            self.i = self.i+1
+            lbl = ttk.Label(self.bus_frm, text=material.name)
+            lbl.grid(row=self.i*2, column=0, sticky=W, pady=2)
+            lbl = ttk.Label(self.bus_frm, text=material.parent)
+            lbl.grid(row=self.i*2, column=1, sticky=W, pady=2, padx=(7,7))
+            lbl = ttk.Label(self.bus_frm, text=material.quantity_needed)
+            lbl.grid(row=self.i*2, column=2, sticky=W, pady=2, padx=(7,7))
+            lbl = ttk.Label(self.bus_frm, text=material.stock)
+            lbl.grid(row=self.i*2, column=3, sticky=W, padx=(7,7), pady=2)
+            lbl = ttk.Label(self.bus_frm, text=material.production_time)
+            lbl.grid(row=self.i*2, column=4, sticky=W, padx=(7,7), pady=2)
+            lbl = ttk.Label(self.bus_frm, text=material.production_capacity)
+            lbl.grid(row=self.i*2, column=5, sticky=W, padx=(7,7), pady=2)
+            sep = ttk.Separator(self.bus_frm, bootstyle=SECONDARY, orient="horizontal")
+            sep.grid(row=self.i*2+1, column=0, columnspan=6, pady=10, sticky=EW)
 
     def display_message(self, message):
         """Display a message in the collapsible frame."""
