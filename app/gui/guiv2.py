@@ -2,7 +2,6 @@ import ttkbootstrap as ttk
 from tksheet import Sheet
 import tkinter as tk
 from ttkbootstrap.constants import *
-from pathlib import Path
 from ttkbootstrap.style import Bootstyle
 from ttkbootstrap.tableview import Tableview
 
