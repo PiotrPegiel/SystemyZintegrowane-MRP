@@ -81,6 +81,19 @@ class MainWindow(ttk.Frame):
         except Exception as e:
             self.display_message(f"Error: {str(e)}")
 
+<<<<<<<<< Temporary merge branch 1
+=========
+    def calculate_mrp(self):
+        """Calculate and display MRP results."""
+        try:
+            planned_deliveries = {material.name: [0] * self.time_periods for material in self.bom.materials}
+            self.mrp_system = MRP(self.bom, self.ghp_system, self.time_periods, planned_deliveries)
+            self.mrp_system.calculate_mrp()
+
+            self.display_mrp_tables()
+        except Exception as e:
+            self.display_message(f"Error: {str(e)}")
+
     def display_ghp_table(self, demand, production, availability):
         """Display GHP results in a table."""
         for widget in self.result_frame.winfo_children():
@@ -90,7 +103,10 @@ class MainWindow(ttk.Frame):
         indexes = ["Demand", "Production", "Availability"]
         data = [demand, production, availability]
 
-        sheet = Sheet(self.result_frame, data=data, headers=headers, row_index=indexes)
+        sheet = Sheet(self.result_frame, data=data, headers=headers, 
+                      row_index=indexes, default_column_width=70, 
+                      default_row_index_width=300, row_index_align="e",
+                      align=CENTER)
         sheet.enable_bindings()
         sheet.pack(fill=BOTH, expand=YES)
 
@@ -121,6 +137,7 @@ class MainWindow(ttk.Frame):
             sheet.enable_bindings()
             sheet.pack(fill=BOTH, expand=YES)
 
+>>>>>>>>> Temporary merge branch 2
     def display_message(self, message):
         """Display a message in the result frame."""
         for widget in self.ghp_gui.result_frame.winfo_children():
