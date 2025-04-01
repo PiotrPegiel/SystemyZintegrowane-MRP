@@ -95,7 +95,10 @@ class MainWindow(ttk.Frame):
         indexes = ["Demand", "Production", "Availability"]
         data = [demand, production, availability]
 
-        sheet = Sheet(self.result_frame, data=data, headers=headers, row_index=indexes)
+        sheet = Sheet(self.result_frame, data=data, headers=headers, 
+                      row_index=indexes, default_column_width=70, 
+                      default_row_index_width=300, row_index_align="e",
+                      align=CENTER)
         sheet.enable_bindings()
         sheet.pack(fill=BOTH, expand=YES)
 
