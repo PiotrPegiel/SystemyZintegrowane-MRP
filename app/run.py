@@ -1,10 +1,14 @@
-import customtkinter as ctk
-from gui.main_window import App  # Import the App class from the main_window.py
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+
+import ttkbootstrap as ttk
+from gui.main_window import MainWindow
 
 
 def run_application():
-    # Initialize the app and run the main loop
-    app = App()
+    app = ttk.Window("GHP and MRP Application", "litera", resizable=(False, False))
+    MainWindow(app)
     app.mainloop()
 
 

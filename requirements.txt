@@ -1,1 +1,5 @@
-customtkinter
+darkdetect==0.8.0
+packaging==24.2
+pillow==11.1.0
+tksheet==7.4.17
+ttkbootstrap==1.12.0
