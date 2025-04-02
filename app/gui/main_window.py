@@ -13,26 +13,30 @@ class MainWindow(ttk.Frame):
         self.pack(fill=BOTH, expand=YES)
 
         # Initialize BOM, GHP, and MRP
+        self.LEFT_FRAME = ttk.Frame(self)
+        self.LEFT_FRAME.pack(side=LEFT)
+        self.RIGHT_FRAME = ttk.Frame(self)
+        self.RIGHT_FRAME.pack(side=RIGHT)
         self.bom = BOM()
         self.ghp_system = GHP(self.bom)
         self.mrp_system = None  # Will be initialized after GHP calculation
         self.time_periods = 10  # Default value, user can change this later
 
         # Create BOM GUI
-        self.bom_gui = BOMGUI(self, self.bom, self.on_material_added)
+        self.bom_gui = BOMGUI(self.LEFT_FRAME, self.bom, self.on_material_added)
 
         # Create input for "Number of Time Periods"
         self.create_time_period_input()
 
         # Create GHP GUI
-        self.ghp_gui = GHPGUI(self, self.ghp_system, self.time_periods_var, self.display_message)
+        self.ghp_gui = GHPGUI(self.RIGHT_FRAME, self.ghp_system, self.time_periods_var, self.display_message)
 
         # Create "Calculate GHP" button
         self.create_calculate_ghp_button()
 
     def create_time_period_input(self):
         """Create input field for the number of time periods."""
-        action_frame = ttk.Frame(self)
+        action_frame = ttk.Frame(master=self.LEFT_FRAME)
         action_frame.pack(fill=X, pady=10)
 
         time_periods_label = ttk.Label(action_frame, text="Number of Time Periods")
@@ -45,7 +49,7 @@ class MainWindow(ttk.Frame):
     def create_calculate_ghp_button(self):
         """Create the 'Calculate GHP' button."""
         self.calculate_ghp_button = ttk.Button(
-            master=self,
+            master=self.LEFT_FRAME,
             text="Calculate GHP",
             bootstyle=PRIMARY,
             command=self.calculate_ghp,
