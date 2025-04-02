@@ -19,8 +19,8 @@ class MainWindow(ttk.Frame):
         self.RIGHT_FRAME.pack(side=RIGHT)
         self.bom = BOM()
         self.ghp_system = GHP(self.bom)
-        self.mrp_system = None  # Will be initialized after GHP calculation
         self.time_periods = 10  # Default value, user can change this later
+        self.mrp_system = MRP(self.bom, self.ghp_system, 10, {"n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]})  # Will be initialized after GHP calculation
 
         # Create BOM GUI
         self.bom_gui = BOMGUI(self.LEFT_FRAME, self.bom, self.on_material_added)
@@ -33,6 +33,8 @@ class MainWindow(ttk.Frame):
 
         # Create "Calculate GHP" button
         self.create_calculate_ghp_button()
+        
+       
 
     def create_time_period_input(self):
         """Create input field for the number of time periods."""
@@ -82,6 +84,53 @@ class MainWindow(ttk.Frame):
 
             # Display the GHP table
             self.ghp_gui.display_ghp_table(demand, production, availability, time_periods)
+            try:
+                self.calculate_mrp_button.destroy()  # Destroy the old button if it exists
+            except AttributeError:
+                pass
+            
+
+            self.calculate_mrp_button = ttk.Button(
+            master=self.RIGHT_FRAME,
+            text="Calculate MRP",
+            bootstyle=PRIMARY,
+            command=self.calculate_mrp    # Placeholder for MRP calculation
+            )
+            self.calculate_mrp_button.pack(side=TOP, pady=10)
+            
+            
+
+            
+        except Exception as e:
+            self.display_message(f"Error: {str(e)}")
+
+    def calculate_mrp(self):
+        """Calculate and display MRP results."""
+        try:
+            
+            # Get the number of time periods from the input field
+            time_periods = self.time_periods_var.get()
+            if time_periods <= 0:
+                raise ValueError("Number of time periods must be a positive integer.")
+
+
+            ghp_system = GHP(self.bom)
+            demand = self.ghp_gui.sheet.data[0] 
+            production = self.ghp_gui.sheet.data[1]
+            table_size = len(demand)  # Determine table size from demand
+            ghp_system.calculate_ghp(demand, production, table_size)
+            planned_deliveries = {
+                material.name: [0] * table_size for material in self.bom.materials
+            }
+
+                
+            mrp_system = MRP(self.bom, ghp_system, table_size, planned_deliveries)
+
+            # Calculate MRP
+            mrp_system.calculate_mrp()
+
+            # Display MRP tables
+            mrp_system.display_mrp()
         except Exception as e:
             self.display_message(f"Error: {str(e)}")
 
