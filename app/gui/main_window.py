@@ -5,6 +5,7 @@ from src.ghp import GHP
 from src.mrp import MRP
 from gui.bom_gui import BOMGUI
 from gui.ghp_gui import GHPGUI
+from gui.mrp_gui import MRPGUI
 
 
 class MainWindow(ttk.Frame):
@@ -17,10 +18,11 @@ class MainWindow(ttk.Frame):
         self.LEFT_FRAME.pack(side=LEFT)
         self.RIGHT_FRAME = ttk.Frame(self)
         self.RIGHT_FRAME.pack(side=RIGHT)
+        self.MRP_frame = ttk.Frame(self.RIGHT_FRAME)
+        self.MRP_frame.pack(fill=BOTH, expand=YES,side=BOTTOM)
         self.bom = BOM()
         self.ghp_system = GHP(self.bom)
         self.time_periods = 10  # Default value, user can change this later
-        self.mrp_system = MRP(self.bom, self.ghp_system, 10, {"n": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]})  # Will be initialized after GHP calculation
 
         # Create BOM GUI
         self.bom_gui = BOMGUI(self.LEFT_FRAME, self.bom, self.on_material_added)
@@ -84,6 +86,7 @@ class MainWindow(ttk.Frame):
 
             # Display the GHP table
             self.ghp_gui.display_ghp_table(demand, production, availability, time_periods)
+
             try:
                 self.calculate_mrp_button.destroy()  # Destroy the old button if it exists
             except AttributeError:
@@ -123,14 +126,19 @@ class MainWindow(ttk.Frame):
                 material.name: [0] * table_size for material in self.bom.materials
             }
 
-                
             mrp_system = MRP(self.bom, ghp_system, table_size, planned_deliveries)
 
             # Calculate MRP
             mrp_system.calculate_mrp()
 
+            # Initialize MRP GUI
+            for widget in self.MRP_frame.winfo_children():
+                widget.destroy()
+
+            mrp_gui = MRPGUI(self.MRP_frame, mrp_system, time_periods)
+
             # Display MRP tables
-            mrp_system.display_mrp()
+            mrp_gui.display_mrp_tables()
         except Exception as e:
             self.display_message(f"Error: {str(e)}")
 
