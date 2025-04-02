@@ -3,6 +3,7 @@ from ttkbootstrap.constants import *
 from tksheet import Sheet
 
 
+
 class GHPGUI(ttk.Frame):
     def __init__(self, master, ghp_system, time_periods_var, display_message):
         super().__init__(master, padding=(10, 10))
@@ -13,6 +14,7 @@ class GHPGUI(ttk.Frame):
         self.display_message = display_message
         self.result_frame = ttk.Frame(self)
         self.result_frame.pack(fill=BOTH, expand=YES, pady=10)
+        self.sheet = None  # Initialize the sheet variable
 
     def display_ghp_table(self, demand, production, availability, time_periods):
         """Display GHP results in a table and dynamically update availability."""
@@ -28,7 +30,7 @@ class GHPGUI(ttk.Frame):
         # Create the Sheet widget and store it as an instance variable
         self.sheet = Sheet(self.result_frame, data=data, headers=headers, row_index=indexes, 
                            default_column_width=70, default_row_index_width=170, 
-                           row_index_align="e", align=CENTER, height=280)
+                           row_index_align="e", align=CENTER, height=280, width=500)
         self.sheet.enable_bindings()
 
         # Event listener for cell edits

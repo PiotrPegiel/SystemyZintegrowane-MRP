@@ -5,6 +5,7 @@ from src.ghp import GHP
 from src.mrp import MRP
 from gui.bom_gui import BOMGUI
 from gui.ghp_gui import GHPGUI
+from gui.mrp_gui import MRPGUI
 
 
 class MainWindow(ttk.Frame):
@@ -13,26 +14,33 @@ class MainWindow(ttk.Frame):
         self.pack(fill=BOTH, expand=YES)
 
         # Initialize BOM, GHP, and MRP
+        self.LEFT_FRAME = ttk.Frame(self)
+        self.LEFT_FRAME.pack(side=LEFT)
+        self.RIGHT_FRAME = ttk.Frame(self)
+        self.RIGHT_FRAME.pack(side=RIGHT)
+        self.MRP_frame = ttk.Frame(self.RIGHT_FRAME)
+        self.MRP_frame.pack(fill=BOTH, expand=YES,side=BOTTOM)
         self.bom = BOM()
         self.ghp_system = GHP(self.bom)
-        self.mrp_system = None  # Will be initialized after GHP calculation
         self.time_periods = 10  # Default value, user can change this later
 
         # Create BOM GUI
-        self.bom_gui = BOMGUI(self, self.bom, self.on_material_added)
+        self.bom_gui = BOMGUI(self.LEFT_FRAME, self.bom, self.on_material_added)
 
         # Create input for "Number of Time Periods"
         self.create_time_period_input()
 
         # Create GHP GUI
-        self.ghp_gui = GHPGUI(self, self.ghp_system, self.time_periods_var, self.display_message)
+        self.ghp_gui = GHPGUI(self.RIGHT_FRAME, self.ghp_system, self.time_periods_var, self.display_message)
 
         # Create "Calculate GHP" button
         self.create_calculate_ghp_button()
+        
+       
 
     def create_time_period_input(self):
         """Create input field for the number of time periods."""
-        action_frame = ttk.Frame(self)
+        action_frame = ttk.Frame(master=self.LEFT_FRAME)
         action_frame.pack(fill=X, pady=10)
 
         time_periods_label = ttk.Label(action_frame, text="Number of Time Periods")
@@ -45,7 +53,7 @@ class MainWindow(ttk.Frame):
     def create_calculate_ghp_button(self):
         """Create the 'Calculate GHP' button."""
         self.calculate_ghp_button = ttk.Button(
-            master=self,
+            master=self.LEFT_FRAME,
             text="Calculate GHP",
             bootstyle=PRIMARY,
             command=self.calculate_ghp,
@@ -78,6 +86,59 @@ class MainWindow(ttk.Frame):
 
             # Display the GHP table
             self.ghp_gui.display_ghp_table(demand, production, availability, time_periods)
+
+            try:
+                self.calculate_mrp_button.destroy()  # Destroy the old button if it exists
+            except AttributeError:
+                pass
+            
+
+            self.calculate_mrp_button = ttk.Button(
+            master=self.RIGHT_FRAME,
+            text="Calculate MRP",
+            bootstyle=PRIMARY,
+            command=self.calculate_mrp    # Placeholder for MRP calculation
+            )
+            self.calculate_mrp_button.pack(side=TOP, pady=10)
+            
+            
+
+            
+        except Exception as e:
+            self.display_message(f"Error: {str(e)}")
+
+    def calculate_mrp(self):
+        """Calculate and display MRP results."""
+        try:
+            
+            # Get the number of time periods from the input field
+            time_periods = self.time_periods_var.get()
+            if time_periods <= 0:
+                raise ValueError("Number of time periods must be a positive integer.")
+
+
+            ghp_system = GHP(self.bom)
+            demand = self.ghp_gui.sheet.data[0] 
+            production = self.ghp_gui.sheet.data[1]
+            table_size = len(demand)  # Determine table size from demand
+            ghp_system.calculate_ghp(demand, production, table_size)
+            planned_deliveries = {
+                material.name: [0] * table_size for material in self.bom.materials
+            }
+
+            mrp_system = MRP(self.bom, ghp_system, table_size, planned_deliveries)
+
+            # Calculate MRP
+            mrp_system.calculate_mrp()
+
+            # Initialize MRP GUI
+            for widget in self.MRP_frame.winfo_children():
+                widget.destroy()
+
+            mrp_gui = MRPGUI(self.MRP_frame, mrp_system, time_periods)
+
+            # Display MRP tables
+            mrp_gui.display_mrp_tables()
         except Exception as e:
             self.display_message(f"Error: {str(e)}")
 
