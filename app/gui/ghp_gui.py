@@ -29,8 +29,8 @@ class GHPGUI(ttk.Frame):
 
         # Create the Sheet widget and store it as an instance variable
         self.sheet = Sheet(self.result_frame, data=data, headers=headers, row_index=indexes, 
-                           default_column_width=70, default_row_index_width=170, 
-                           row_index_align="e", align=CENTER, height=280, width=500)
+                           default_column_width=35, default_row_index_width=90, 
+                           row_index_align="e", align=CENTER, height=150, width=550)
         self.sheet.enable_bindings()
 
         # Event listener for cell edits
