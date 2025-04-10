@@ -94,17 +94,24 @@ class MRP:
 
                 if available < 0:
                     mrp_table.net_requirement[t] = abs(available)
-                    # Find latest planned order with value != 0
-                    latest_planned_order_index = 0
+                    # Find the latest planned order with value != 0
+                    latest_planned_order_index = -1
                     for i in range(t, -1, -1):
                         if mrp_table.planned_order[i] != 0:
                             latest_planned_order_index = i
                             break
-                    if latest_planned_order_index < t and latest_planned_order_index + material.production_time <= t:
-                        # Create a new planned order
+
+                    # Ensure no overlapping production
+                    if latest_planned_order_index == -1 or latest_planned_order_index + material.production_time <= t:
                         release_time = max(0, t - material.production_time)
+
+                        # Check if the release time overlaps with the previous order's production
+                        if latest_planned_order_index != -1 and release_time < latest_planned_order_index + material.production_time:
+                            release_time = latest_planned_order_index + material.production_time
+
+                        # Create a new planned order
                         mrp_table.planned_order[release_time] += material.production_capacity
-                        receipt_time = release_time + material.production_time  # Receipt does not always happen at current index
+                        receipt_time = release_time + material.production_time
                         if receipt_time < self.table_size:
                             mrp_table.planned_receipt[receipt_time] += material.production_capacity
 
@@ -114,7 +121,7 @@ class MRP:
                     available = (
                         mrp_table.available[t - 1]
                         + mrp_table.planned_delivery[t]
-                        + mrp_table.planned_receipt[t]  # Add planned receipt only at this index
+                        + mrp_table.planned_receipt[t]
                         - mrp_table.demand[t]
                     )
 
@@ -218,3 +225,13 @@ if __name__ == "__main__":
     # net requirement: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     # planned order: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     # planned receipt: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    # Extreme case:
+    print("Extreme case:")
+    production2 = [30, 30, 30, 30, 30, 30, 30, 30, 30, 30] # Example production for the Table
+    ghp_system2 = GHP(bom)
+    ghp_system2.calculate_ghp(demand, production2, table_size)
+    ghp_production2 = ghp_system2.get_tables()['production']
+    mrp_system2 = MRP(bom, ghp_system2, table_size, planned_deliveries)
+    mrp_system2.calculate_mrp()
+    mrp_system2.display_mrp()
