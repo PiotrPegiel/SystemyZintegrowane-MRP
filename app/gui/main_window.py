@@ -110,25 +110,27 @@ class MainWindow(ttk.Frame):
     def calculate_mrp(self):
         """Calculate and display MRP results."""
         try:
-            
             # Get the number of time periods from the input field
             time_periods = self.time_periods_var.get()
             if time_periods <= 0:
                 raise ValueError("Number of time periods must be a positive integer.")
 
-
-            ghp_system = GHP(self.bom)
-            demand = self.ghp_gui.sheet.data[0] 
-            production = self.ghp_gui.sheet.data[1]
+            # Convert GHP data to numeric values
+            demand = [int(value) if str(value).strip().isdigit() else 0 for value in self.ghp_gui.sheet.data[0]]
+            production = [int(value) if str(value).strip().isdigit() else 0 for value in self.ghp_gui.sheet.data[1]]
             table_size = len(demand)  # Determine table size from demand
+
+            # Recalculate GHP with sanitized data
+            ghp_system = GHP(self.bom)
             ghp_system.calculate_ghp(demand, production, table_size)
+
+            # Initialize planned deliveries with zeros
             planned_deliveries = {
                 material.name: [0] * table_size for material in self.bom.materials
             }
 
+            # Create and calculate MRP system
             mrp_system = MRP(self.bom, ghp_system, table_size, planned_deliveries)
-
-            # Calculate MRP
             mrp_system.calculate_mrp()
 
             # Initialize MRP GUI

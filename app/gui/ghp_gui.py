@@ -25,12 +25,16 @@ class GHPGUI(ttk.Frame):
         # Define table headers and data
         headers = [str(i + 1) for i in range(time_periods)]
         indexes = ["Demand", "Production", "Availability"]
-        data = [demand, production, availability]
+        data = [
+            [value if value != 0 else "" for value in demand],  # Hide zeros in demand
+            [value if value != 0 else "" for value in production],  # Hide zeros in production
+            availability  # Keep zeros in availability
+        ]
 
         # Create the Sheet widget and store it as an instance variable
         self.sheet = Sheet(self.result_frame, data=data, headers=headers, row_index=indexes, 
-                           default_column_width=35, default_row_index_width=90, 
-                           row_index_align="e", align=CENTER, height=150, width=550)
+                        default_column_width=35, default_row_index_width=90, 
+                        row_index_align="e", align=CENTER, height=150, width=550)
         self.sheet.enable_bindings()
 
         # Event listener for cell edits
@@ -40,11 +44,15 @@ class GHPGUI(ttk.Frame):
                 row = event["row"]
                 col = event["column"]
 
+                # Get the cell data and convert it to an integer (default to 0 if empty)
+                cell_data = self.sheet.get_cell_data(row, col)
+                value = int(cell_data) if cell_data.strip() else 0
+
                 # Update the corresponding demand or production value
                 if row == 0:  # Demand row
-                    demand[col] = int(self.sheet.get_cell_data(row, col))
+                    demand[col] = value
                 elif row == 1:  # Production row
-                    production[col] = int(self.sheet.get_cell_data(row, col))
+                    production[col] = value
 
                 # Recalculate availability
                 new_availability = self.ghp_system.calculate_ghp(demand, production, time_periods)
