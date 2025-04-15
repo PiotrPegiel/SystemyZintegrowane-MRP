@@ -1,6 +1,6 @@
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from src.bom import BOM
+from src.bom import BOM, Material
 from src.ghp import GHP
 from src.mrp import MRP
 from gui.bom_gui import BOMGUI
@@ -36,7 +36,8 @@ class MainWindow(ttk.Frame):
         # Create "Calculate GHP" button
         self.create_calculate_ghp_button()
         
-       
+        # Create "Load Hardcoded Data" button
+        self.create_load_hardcoded_data_button()
 
     def create_time_period_input(self):
         """Create input field for the number of time periods."""
@@ -60,6 +61,70 @@ class MainWindow(ttk.Frame):
         )
         self.calculate_ghp_button.pack(side=TOP, pady=10)
         self.calculate_ghp_button.pack_forget()  # Initially hidden
+
+    def create_load_hardcoded_data_button(self):
+        """Create the 'Load Hardcoded Data' button."""
+        load_button = ttk.Button(
+            master=self.LEFT_FRAME,
+            text="Load hardcoded data",
+            bootstyle=SUCCESS,
+            command=self.load_hardcoded_data,
+        )
+        load_button.pack(side=TOP, pady=10)
+
+    def load_hardcoded_data(self):
+        """Load hardcoded data into the BOM, GHP, and MRP."""
+        try:
+            # Clear existing BOM
+            self.bom = BOM()
+            self.ghp_system = GHP(self.bom)
+
+            # Create hardcoded BOM
+            papier_toaletowy = Material(name="papier toaletowy", stock=200, production_time=1)
+            rolka = Material(name="rolka", parent="papier toaletowy", quantity_needed=1, stock=22, production_time=2, production_capacity=100)
+            makulatura = Material(name="makulatura", parent="rolka", quantity_needed=5, stock=200, production_time=1, production_capacity=150)
+            papier = Material(name="papier", parent="papier toaletowy", quantity_needed=3, stock=50, production_time=1, production_capacity=120)
+            masa_papiernicza = Material(name="masa papiernicza", parent="papier", quantity_needed=2, stock=80, production_time=3, production_capacity=400)
+
+            papier_toaletowy.add_child(rolka)
+            papier_toaletowy.add_child(papier)
+            rolka.add_child(makulatura)
+            papier.add_child(masa_papiernicza)
+
+            self.bom.add_material(papier_toaletowy)
+            self.bom.add_material(rolka)
+            self.bom.add_material(makulatura)
+            self.bom.add_material(papier)
+            self.bom.add_material(masa_papiernicza)
+
+            # Notify BOM GUI
+            self.bom_gui.bom = self.bom
+            self.bom_gui.update_product_list()
+
+            # Set time periods
+            self.time_periods_var.set(10)
+
+            # Create GHP
+            demand = [0, 0, 0, 0, 75, 0, 0, 40, 0, 10]
+            production = [0, 0, 0, 0, 23, 0, 0, 50, 0, 0]
+            self.ghp_system.calculate_ghp(demand, production, 10)
+
+            # Display GHP
+            self.ghp_gui.display_ghp_table(demand, production, self.ghp_system.get_tables()["availability"], 10)
+
+            # Create and calculate MRP
+            planned_deliveries = {material.name: [0] * 10 for material in self.bom.materials}
+            mrp_system = MRP(self.bom, self.ghp_system, 10, planned_deliveries)
+            mrp_system.calculate_mrp()
+
+            # Display MRP
+            for widget in self.MRP_frame.winfo_children():
+                widget.destroy()
+            mrp_gui = MRPGUI(self.MRP_frame, mrp_system, 10)
+            mrp_gui.display_mrp_tables()
+
+        except Exception as e:
+            self.display_message(f"Error: {str(e)}")
 
     def on_material_added(self, material):
         """Callback when a material is added."""
