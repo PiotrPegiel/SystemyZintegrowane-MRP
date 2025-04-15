@@ -53,12 +53,12 @@ class MRPGUI(ttk.Frame):
                 "Planned Receipt",
             ]
             data = [
-                table.demand,
-                table.planned_delivery,
-                table.available,
-                table.net_requirement,
-                table.planned_order,
-                table.planned_receipt,
+                [value if value != 0 else "" for value in table.demand],  # Hide zeros in demand
+                [value if value != 0 else "" for value in table.planned_delivery],  # Hide zeros in planned delivery
+                table.available,  # Keep zeros in availability
+                [value if value != 0 else "" for value in table.net_requirement],  # Hide zeros in net requirement
+                [value if value != 0 else "" for value in table.planned_order],  # Hide zeros in planned order
+                [value if value != 0 else "" for value in table.planned_receipt],  # Hide zeros in planned receipt
             ]
 
             # Create the Sheet widget and store it in the sheets dictionary
@@ -84,25 +84,29 @@ class MRPGUI(ttk.Frame):
             self.bind_sheet_events(sheet, material_name)
 
     def bind_sheet_events(self, sheet, material_name):
-        """
-        Bind the edit_cell event for a specific sheet and material.
-        """
+        """Bind events to the Sheet widget for editing."""
         def on_cell_edit(event):
             try:
                 # Get the modified cell's row and column
                 row = event["row"]
                 col = event["column"]
 
-                # Update the planned delivery for the material
-                if row == 1:  # Planned Delivery row
-                    new_value = int(sheet.get_cell_data(row, col))
-                    self.mrp_system.planned_delivery[material_name][col] = new_value
+                # Get the cell data and convert it to an integer (default to 0 if empty)
+                cell_data = sheet.get_cell_data(row, col)
+                value = int(cell_data) if cell_data.strip() else 0
 
-                    # Recalculate MRP tables
-                    self.mrp_system.calculate_mrp()
+                # Update the corresponding MRP table data
+                table = self.mrp_system.mrp_tables[material_name]
+                if row == 0:  # Demand row
+                    table.demand[col] = value
+                elif row == 1:  # Planned Delivery row
+                    table.planned_delivery[col] = value
 
-                    # Refresh the data in all sheets
-                    self.refresh_mrp_data()
+                # Recalculate MRP
+                self.mrp_system.calculate_mrp()
+
+                # Refresh the table data
+                self.display_mrp_tables()
             except ValueError:
                 print("Error: Please enter a valid integer.")
             except Exception as e:
@@ -110,20 +114,3 @@ class MRPGUI(ttk.Frame):
 
         # Bind the "edit_cell" event to the on_cell_edit function
         sheet.extra_bindings("edit_cell", on_cell_edit)
-
-    def refresh_mrp_data(self):
-        """
-        Refresh the data in all MRP tables without recreating the widgets.
-        """
-        for material_name, sheet in self.sheets.items():
-            table = self.mrp_system.mrp_tables[material_name]
-
-            # Update the data in the existing Sheet widget
-            sheet.set_sheet_data([
-                table.demand,
-                table.planned_delivery,
-                table.available,
-                table.net_requirement,
-                table.planned_order,
-                table.planned_receipt,
-            ])
