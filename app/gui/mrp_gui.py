@@ -106,7 +106,7 @@ class MRPGUI(ttk.Frame):
                 self.mrp_system.calculate_mrp()
 
                 # Refresh the table data
-                self.display_mrp_tables()
+                self.refresh_mrp_data()
             except ValueError:
                 print("Error: Please enter a valid integer.")
             except Exception as e:
@@ -114,3 +114,29 @@ class MRPGUI(ttk.Frame):
 
         # Bind the "edit_cell" event to the on_cell_edit function
         sheet.extra_bindings("edit_cell", on_cell_edit)
+
+    
+    def refresh_mrp_data(self):
+ 
+        """
+        Refresh the data in all MRP tables without recreating the widgets.
+        """
+ 
+        for material_name, sheet in self.sheets.items():
+            table = self.mrp_system.mrp_tables[material_name]
+            # Update the data in the existing Sheet widget
+
+
+            sheet_data = [
+                [value if value != 0 else "" for value in table.demand],  # Hide zeros in demand
+                [value if value != 0 else "" for value in table.planned_delivery],  # Hide zeros in planned delivery
+                table.available,  # Keep zeros in availability
+                [value if value != 0 else "" for value in table.net_requirement],  # Hide zeros in net requirement
+                [value if value != 0 else "" for value in table.planned_order],  # Hide zeros in planned order
+                [value if value != 0 else "" for value in table.planned_receipt],  # Hide zeros in planned receipt
+            ]
+ 
+
+            sheet.set_sheet_data(
+                data = sheet_data
+            )
