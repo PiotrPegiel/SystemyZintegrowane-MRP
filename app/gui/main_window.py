@@ -99,10 +99,12 @@ class MainWindow(ttk.Frame):
             # Notify BOM GUI
             self.bom_gui.bom = self.bom
             self.bom_gui.update_product_list()
+
             self.calculate_ghp_button.pack(side=TOP, pady=10)
             self.ghp_system = GHP(self.bom)
             self.ghp_gui = GHPGUI(self.RIGHT_FRAME, self.ghp_system, self.time_periods_var, self.display_message)
             
+
 
 
         except Exception as e:
