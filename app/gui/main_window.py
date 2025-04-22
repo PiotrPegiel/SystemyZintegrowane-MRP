@@ -77,7 +77,6 @@ class MainWindow(ttk.Frame):
         try:
             # Clear existing BOM
             self.bom = BOM()
-            self.ghp_system = GHP(self.bom)
 
             # Create hardcoded BOM
             papier_toaletowy = Material(name="papier toaletowy", stock=200, production_time=1)
@@ -101,27 +100,12 @@ class MainWindow(ttk.Frame):
             self.bom_gui.bom = self.bom
             self.bom_gui.update_product_list()
 
-            # Set time periods
-            self.time_periods_var.set(10)
+            self.calculate_ghp_button.pack(side=TOP, pady=10)
+            self.ghp_system = GHP(self.bom)
+            self.ghp_gui = GHPGUI(self.RIGHT_FRAME, self.ghp_system, self.time_periods_var, self.display_message)
+            
 
-            # Create GHP
-            demand = [0, 0, 0, 0, 75, 0, 0, 40, 0, 10]
-            production = [0, 0, 0, 0, 23, 0, 0, 50, 0, 0]
-            self.ghp_system.calculate_ghp(demand, production, 10)
 
-            # Display GHP
-            self.ghp_gui.display_ghp_table(demand, production, self.ghp_system.get_tables()["availability"], 10)
-
-            # Create and calculate MRP
-            planned_deliveries = {material.name: [0] * 10 for material in self.bom.materials}
-            mrp_system = MRP(self.bom, self.ghp_system, 10, planned_deliveries)
-            mrp_system.calculate_mrp()
-
-            # Display MRP
-            for widget in self.MRP_frame.winfo_children():
-                widget.destroy()
-            mrp_gui = MRPGUI(self.MRP_frame, mrp_system, 10)
-            mrp_gui.display_mrp_tables()
 
         except Exception as e:
             self.display_message(f"Error: {str(e)}")
