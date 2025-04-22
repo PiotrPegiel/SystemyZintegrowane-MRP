@@ -104,7 +104,6 @@ class MainWindow(ttk.Frame):
             self.ghp_system = GHP(self.bom)
             self.ghp_gui = GHPGUI(self.RIGHT_FRAME, self.ghp_system, self.time_periods_var, self.display_message)
             self.bom_gui.create_additional_form()
-            self.bom_gui.create_additional_form()
             
 
 
