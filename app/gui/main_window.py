@@ -27,6 +27,9 @@ class MainWindow(ttk.Frame):
         # Create BOM GUI
         self.bom_gui = BOMGUI(self.LEFT_FRAME, self.bom, self.on_material_added)
 
+        # Create "Load Hardcoded Data" button
+        self.create_load_hardcoded_data_button()
+
         # Create input for "Number of Time Periods"
         self.create_time_period_input()
 
@@ -35,9 +38,6 @@ class MainWindow(ttk.Frame):
 
         # Create "Calculate GHP" button
         self.create_calculate_ghp_button()
-        
-        # Create "Load Hardcoded Data" button
-        self.create_load_hardcoded_data_button()
 
     def create_time_period_input(self):
         """Create input field for the number of time periods."""
