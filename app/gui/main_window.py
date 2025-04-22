@@ -103,6 +103,7 @@ class MainWindow(ttk.Frame):
             self.calculate_ghp_button.pack(side=TOP, pady=10)
             self.ghp_system = GHP(self.bom)
             self.ghp_gui = GHPGUI(self.RIGHT_FRAME, self.ghp_system, self.time_periods_var, self.display_message)
+            self.bom_gui.create_additional_form()
             
 
 
